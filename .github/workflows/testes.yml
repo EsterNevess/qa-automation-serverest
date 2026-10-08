@@ -1,0 +1,76 @@
+# Integração contínua: roda os testes automaticamente no GitHub
+# a cada push, a cada pull request e também quando você clicar em "Run workflow".
+name: Testes automatizados
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  api:
+    name: Testes de API
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar Node (para subir o ServeRest)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar dependências do projeto
+        run: pip install -r requirements.txt
+
+      - name: Subir o ServeRest localmente
+        run: |
+          npx --yes serverest@latest -p 3000 &
+          npx --yes wait-on http://localhost:3000/usuarios --timeout 60000
+
+      - name: Rodar testes de API
+        env:
+          API_URL: http://localhost:3000
+        run: pytest -m api --html=reports/relatorio-api.html --self-contained-html
+
+      - name: Guardar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-api
+          path: reports/
+
+  web:
+    name: Testes Web (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependências e navegador
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Rodar testes web
+        run: pytest -m web --html=reports/relatorio-web.html --self-contained-html
+
+      - name: Guardar relatório e prints de falha
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-web
+          path: |
+            reports/
+            test-results/
