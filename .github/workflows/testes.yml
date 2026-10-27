@@ -14,7 +14,7 @@ permissions:
 jobs:
   api:
     name: Testes de API
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # fixo: o rotulo "latest" migrou para o Ubuntu 26, sem suporte do Playwright
     steps:
       - name: Baixar o código
         uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
 
   web:
     name: Testes Web (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # fixo: o rotulo "latest" migrou para o Ubuntu 26, sem suporte do Playwright
     steps:
       - name: Baixar o código
         uses: actions/checkout@v4
@@ -113,7 +113,7 @@ jobs:
     name: Relatório Allure
     needs: [api, web]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # fixo: o rotulo "latest" migrou para o Ubuntu 26, sem suporte do Playwright
     steps:
       - name: Baixar os resultados da API
         uses: actions/download-artifact@v4
