@@ -1,6 +1,9 @@
 # QA Automation – ServeRest
 
 ![Testes automatizados](https://github.com/EsterNevess/qa-automation-serverest/actions/workflows/testes.yml/badge.svg)
+[![Relatório Allure](https://img.shields.io/badge/Relat%C3%B3rio-Allure-FF5722?logo=qase&logoColor=white)](https://esternevess.github.io/qa-automation-serverest/)
+
+📊 **[Relatório Allure da última execução](https://esternevess.github.io/qa-automation-serverest/)** — API e Web num relatório só, publicado a cada push, com histórico das últimas 20 execuções.
 
 Projeto de automação de testes da API REST e da loja web do **[ServeRest](https://serverest.dev)**, um sistema de e-commerce feito para estudo e prática de testes.
 

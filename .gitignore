@@ -14,3 +14,9 @@ test-results/
 # Configurações do editor
 .vscode/
 .idea/
+
+# Allure
+allure-results/
+allure-report/
+allure-history/
+gh-pages/

@@ -8,6 +8,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   api:
     name: Testes de API
@@ -35,6 +38,8 @@ jobs:
           npx --yes wait-on http://localhost:3000/usuarios --timeout 60000
 
       - name: Rodar testes de API
+        id: testes
+        continue-on-error: true
         env:
           API_URL: http://localhost:3000
         run: pytest -m api --html=reports/relatorio-api.html --self-contained-html
@@ -45,6 +50,18 @@ jobs:
         with:
           name: relatorio-api
           path: reports/
+
+      - name: Guardar resultados do Allure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-api
+          path: allure-results/
+          if-no-files-found: ignore
+
+      - name: Refletir o resultado dos testes
+        if: steps.testes.outcome == 'failure'
+        run: exit 1
 
   web:
     name: Testes Web (Playwright)
@@ -64,6 +81,8 @@ jobs:
           playwright install --with-deps chromium
 
       - name: Rodar testes web
+        id: testes
+        continue-on-error: true
         run: pytest -m web --html=reports/relatorio-web.html --self-contained-html
 
       - name: Guardar relatório e prints de falha
@@ -74,3 +93,60 @@ jobs:
           path: |
             reports/
             test-results/
+
+      - name: Guardar resultados do Allure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-web
+          path: allure-results/
+          if-no-files-found: ignore
+
+      - name: Refletir o resultado dos testes
+        if: steps.testes.outcome == 'failure'
+        run: exit 1
+
+  # Junta os resultados das duas suítes num relatório só. Separar API e Web
+  # em dois jobs deixa a execução mais rápida; juntar os relatórios evita que
+  # quem for olhar precise abrir dois lugares.
+  relatorio:
+    name: Relatório Allure
+    needs: [api, web]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar os resultados da API
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: allure-api
+          path: allure-results
+
+      - name: Baixar os resultados da Web
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: allure-web
+          path: allure-results
+
+      - name: Recuperar o histórico
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Gerar o relatório
+        uses: simple-elf/allure-report-action@v1.12
+        with:
+          allure_results: allure-results
+          allure_history: allure-history
+          gh_pages: gh-pages
+          keep_reports: 20
+
+      - name: Publicar no GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
